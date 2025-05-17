@@ -23,6 +23,25 @@ module.exports = {
           900: '#0c4a6e',
         },
       },
+      keyframes: {
+        ripple: {
+          '0%': { transform: 'scale(0)', opacity: '0.5' },
+          '100%': { transform: 'scale(4)', opacity: '0' }
+        },
+        draw: {
+          '0%': { strokeDasharray: '0 100%', strokeDashoffset: '100%' },
+          '100%': { strokeDasharray: '100% 0', strokeDashoffset: '0' }
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' }
+        }
+      },
+      animation: {
+        ripple: 'ripple 0.6s linear',
+        draw: 'draw 2s ease-in-out infinite alternate',
+        float: 'float 3s ease-in-out infinite'
+      }
     },
   },
   plugins: [],
