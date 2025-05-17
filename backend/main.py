@@ -11,7 +11,9 @@ load_dotenv()
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ROOT = os.path.abspath(os.path.dirname(__file__))
-sys.path.extend([PROJECT_ROOT, ROOT])
+sys.path.append(PROJECT_ROOT)
+sys.path.append(ROOT)
+
 
 app = FastAPI(title="MCPInception API")
 from backend.helpers import (
@@ -19,6 +21,7 @@ from backend.helpers import (
     get_yc_companies,
     save_companies_to_db,
     get_companies,
+    get_yc_batch_companies,
 )
 
 def get_db_conn():
@@ -95,6 +98,23 @@ async def yc_db(limit: int = 100):
     return {"count": len(rows), "companies": rows}
 
 
+# ---------------------------------------------------------------------------
+# Batch endpoint
+# ---------------------------------------------------------------------------
+
+@app.get("/yc/batch")
+async def yc_batch(batch: str = "Winter 2012"):
+    """Return companies for a given YC *batch* (e.g. 'Winter 2012')."""
+
+    try:
+        data = get_yc_batch_companies(batch)
+        return {"batch": batch, "count": len(data), "companies": data}
+    except ValueError as err:
+        raise HTTPException(status_code=404, detail=str(err))
+    except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=500, detail=f"Failed to fetch batch: {exc}")
+
+
 """
 cd backend &&
 uv run -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -110,4 +130,12 @@ curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
 
 curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
 curl 'http://127.0.0.1:8000/yc?category=hiring&persist=true' | jq '.saved'
+
+curl 'http://127.0.0.1:8000/yc/db?limit=20' | jq
+
+
+### Request all YC Companies from a batch (Summer 2015 for example)
+cd backend && uv run -m uvicorn main:app --reload
+
+curl 'http://127.0.0.1:8000/yc/batch?batch=Summer%202015' | jq '.count'
 """
