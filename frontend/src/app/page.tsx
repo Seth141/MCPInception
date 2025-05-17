@@ -17,14 +17,30 @@ export default function Home() {
     setResults(null);
     
     try {
-      alert('About to fetch from http://localhost:8000/yc');
-      const response = await fetch(`http://localhost:8000/yc`, {
+      alert('About to fetch from local API proxy');
+      const apiUrl = new URL('/api/yc', window.location.origin);
+
+      alert(window.location.origin);
+      
+      // Add the URL and server name as query parameters if they're provided
+      if (url) {
+        apiUrl.searchParams.append('url', url);
+      }
+      if (serverName) {
+        apiUrl.searchParams.append('serverName', serverName);
+      }
+      
+      const response = await fetch(apiUrl.toString(), {
         method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
       alert('Response received');
 
       
       if (!response.ok) {
+        alert('bad response');
         alert(`Server responded with status: ${response.status}`);
         throw new Error(`Server responded with status: ${response.status}`);
         
