@@ -1,0 +1,7 @@
+### Run MCP Server and get yc companies in json format ###
+
+# terminal 1
+uv run yc_mcp_server.py
+
+# terminal 2
+curl -s "https://yc-oss.github.io/api/batches/summer-2015.json"
