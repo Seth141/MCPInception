@@ -73,23 +73,30 @@ The backend uses a `./.env` file (within the `backend` directory) to manage envi
 
 **Important:** The `backend/.env` file should *not* be committed to version control. Ensure `backend/.env` is listed in your `.gitignore` file.
 
-### Running Python Scripts
+### Running the Backend API
 
-The primary example script is `template.py`, which demonstrates web scraping using `BeautifulSoup` and database interaction with `psycopg2`.
+The backend is now served via **FastAPI** (`backend/main.py`). It exposes two simple endpoints:
 
-**Dependencies**: The `./create-venv.sh` script installs all necessary Python packages (including `psycopg2` for PostgreSQL, `beautifulsoup4` and `requests` for web scraping, `python-dotenv` for environment variables, and `pydantic` for data validation) from `backend/pyproject.toml` into the virtual environment.
+| Method | Path       | Purpose                         |
+|--------|-----------|---------------------------------|
+| GET    | /health   | Basic liveness probe            |
+| GET    | /scrape   | Scrape the supplied `url` query param and return the page title |
 
-**Execution**: To execute Python scripts located within the `backend` directory, it's recommended to run `uv` from within that directory. `uv run` will automatically use the `backend/.venv`.
+**Dependencies**: `fastapi`, `uvicorn`, `psycopg2`, `beautifulsoup4`, `requests` (all installed by `create-venv.sh` via `pyproject.toml`).
 
-1.  Ensure you are in the `backend` directory:
-    ```bash
-    # If not already there from a previous step:
-    # cd backend 
-    ```
-2.  Run the `template.py` script, providing a full valid URL as an argument:
-    ```bash
-    uv run template.py <your_target_url>
-    # Example:
-    # uv run template.py http://example.com
-    ```
-    The script will attempt to connect to the `mcp` PostgreSQL database (using credentials typically defined in `template.py` or via environment variables) and then fetch and parse the content from the provided URL.
+**Start the dev server** (hot-reload):
+```bash
+cd backend
+uv run -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Once running you can test:
+```bash
+# Health-check
+curl http://127.0.0.1:8000/health
+
+# Scrape example.com
+curl "http://127.0.0.1:8000/scrape?url=https://example.com"
+```
+
+The `/scrape` handler fetches the URL with `requests`, parses it using **BeautifulSoup**, and returns the `<title>` text. It also utilises `helpers.db_connect()` for database access (PostgreSQL `mcp` DB).
