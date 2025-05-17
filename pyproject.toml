@@ -1,0 +1,18 @@
+[project]
+name = "MCPInception"
+version = "0.1.0"
+description = "A Python project managed with uv."
+# authors = [
+#     {name = "Your Name", email = "you@example.com"},
+# ]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "beautifulsoup4>=4.0,<5.0",
+    "requests>=2.0,<3.0",
+    "python-dotenv>=1.0,<2.0",
+]
+
+[tool.uv]
+# uv configuration can go here if needed in the future
+# For now, dependencies are managed under [project.dependencies]
