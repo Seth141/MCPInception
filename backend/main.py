@@ -14,7 +14,12 @@ ROOT = os.path.abspath(os.path.dirname(__file__))
 sys.path.extend([PROJECT_ROOT, ROOT])
 
 app = FastAPI(title="MCPInception API")
-from backend.helpers import db_connect
+from backend.helpers import (
+    db_connect,
+    get_yc_companies,
+    save_companies_to_db,
+    get_companies,
+)
 
 def get_db_conn():
     """Return a psycopg2 connection to configured DB."""
@@ -44,11 +49,65 @@ async def scrape(url: str = "http://127.0.0.1:8000/scrape?url=https://www.ycombi
     return {"title": title}
 
 
+@app.get("/yc")
+async def yc_companies(
+    category: str = "all",
+    persist: bool = False,
+):
+    """Return YC companies list by *category*.
+
+    If `persist=true`, rows are validated via Pydantic and upserted into the
+    `yc_companies` Postgres table.
+    """
+
+    try:
+        data = get_yc_companies(category)
+
+        saved = None
+        if persist:
+            conn = get_db_conn()
+            saved = save_companies_to_db(conn, data)
+            conn.close()
+
+        return {
+            "category": category,
+            "count": len(data),
+            **({"saved": saved} if saved is not None else {}),
+            "companies": data,
+        }
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=500, detail=f"Failed to fetch YC data: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# DB inspect endpoint
+# ---------------------------------------------------------------------------
+
+@app.get("/yc/db")
+async def yc_db(limit: int = 100):
+    """Return *limit* YC company rows from the database."""
+
+    conn = get_db_conn()
+    rows = get_companies(conn, limit)
+    conn.close()
+    return {"count": len(rows), "companies": rows}
+
+
 """
 cd backend &&
 uv run -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 http://127.0.0.1:8000/health
 http://127.0.0.1:8000/scrape?url=https://www.ycombinator.com/
-"""
 
+
+uv run -m uvicorn main:app --reload
+# then
+curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
+
+
+curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
+curl 'http://127.0.0.1:8000/yc?category=hiring&persist=true' | jq '.saved'
+"""
