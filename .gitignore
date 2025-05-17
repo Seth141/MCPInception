@@ -13,3 +13,12 @@ backend/.venv/
 # Lock files
 uv.lock # For root, if it exists and is no longer needed
 backend/uv.lock*.code-workspace
+
+# Node.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+*.node
+frontend/dist/
+dist/
