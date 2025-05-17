@@ -38,10 +38,8 @@ def parse_args() -> argparse.Namespace:
 
 def db_create(DB_NAME: str = os.getenv("DB_NAME", "mcp")) -> None:
     """
-    create the database
+    create the database if it doesn't exist already
     """
-    # create db if not exists
-
     try:
         conn = psycopg2.connect(
             host="localhost",
@@ -63,8 +61,8 @@ def db_connect(
 ) -> psycopg2.extensions.connection | None:
     """
     postgres db connection
-    if db_name is None, create the db if not exists, and connect to it
-    else connect to the existing db right away
+    create the db if it doesn't exist already, and connect to it
+    otherwise connect to the existing db right away
     """
     # brew services start postgresql
     # psql -U ${whoami} -d postgres
