@@ -8,24 +8,33 @@ This project uses [uv](https://github.com/astral-sh/uv) for Python package manag
 The project is built using Python 3.12.
 
 ### Environment Setup
-1.  Ensure you have `uv` installed.
-2.  Create a virtual environment in the project root:
+1.  Ensure you have `uv` installed (if not already managed by the setup script).
+2.  Run the setup script to create the virtual environment and install dependencies:
     ```bash
-    uv venv
+    ./setup/create-venv.sh
     ```
-3.  Activate the virtual environment:
+    This script will create a `.venv` directory in the project root and install all dependencies listed in `pyproject.toml`.
+3.  If you need to activate the environment manually (e.g., for direct terminal use outside of `uv run`), you can do so after the setup script has run:
     ```bash
     source .venv/bin/activate  # On macOS/Linux
     # or .venv\Scripts\activate on Windows
     ```
-4.  Install dependencies from `pyproject.toml`:
+
+### Environment Variables
+This project uses a `.env` file to manage environment-specific variables. A template is provided as `.env.example`.
+
+1.  Copy the example file to a new `.env` file:
     ```bash
-    uv pip sync pyproject.toml
+    cp .env.example .env
     ```
+2.  Open the `.env` file and update the placeholder values with your actual configuration details (e.g., API keys, database URLs).
+
+**Important:** The `.env` file should *not* be committed to version control. Ensure it is listed in your `.gitignore` file.
 
 ### Running Python Scripts
-To execute Python scripts within the project's managed environment, use `uv run`:
+To execute Python scripts, use `uv run`. This command automatically uses the project's virtual environment (created by `./setup/create-venv.sh`) and ensures the script runs with the correct Python interpreter (3.12) and all specified dependencies. You do not need to manually activate the virtual environment before using `uv run`.
+
+Example:
 ```bash
 uv run your_script_name.py
 ```
-This ensures the script runs with the correct Python interpreter (3.12) and all specified dependencies.
