@@ -17,6 +17,10 @@ dependencies = [
     "gunicorn>=23.0.0",
 ]
 
+# Explicit packaging configuration to avoid setuptools flat-layout error
+[tool.setuptools]
+py-modules = ["main", "helpers"]
+
 [tool.uv]
 # uv configuration can go here if needed in the future
 # For now, dependencies are managed under [project.dependencies]
