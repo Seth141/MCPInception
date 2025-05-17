@@ -10,23 +10,35 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    alert('Button clicked - handleSubmit triggered');
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResults(null);
     
     try {
-      const response = await fetch(`http://localhost:8000/scrape`, {
+      alert('About to fetch from http://localhost:8000/yc');
+      const response = await fetch(`http://localhost:8000/yc`, {
         method: 'GET',
       });
+      alert('Response received');
+
       
       if (!response.ok) {
+        alert(`Server responded with status: ${response.status}`);
         throw new Error(`Server responded with status: ${response.status}`);
+        
       }
-      
-      const data = await response.json();
-      console.log('Scrape results:', data);
-      setResults(JSON.stringify(data, null, 2));
+
+      try {
+        alert('About to parse JSON');
+        const data = await response.json();
+        alert('JSON parsed successfully: ' + JSON.stringify(data).substring(0, 100));
+        setResults(JSON.stringify(data, null, 2));
+      } catch (jsonError) {
+        alert('JSON parsing error: ' + (jsonError instanceof Error ? jsonError.message : 'Unknown JSON error'));
+        throw jsonError;
+      }
     } catch (err) {
       console.error('Error calling scrape endpoint:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
