@@ -129,6 +129,24 @@ YC_CATEGORIES: dict[str, str] = {
     "nonprofit": "nonprofit.json",
 }
 
+# base URL for batches
+BATCH_API_BASE = "https://yc-oss.github.io/api/batches"
+
+def _normalize_batch(batch: str) -> str:
+    """Convert input like 'Winter 2012' or 'winter-2012' -> 'winter-2012'."""
+    cleaned = batch.strip().lower().replace(" ", "-")
+    return cleaned
+
+def get_yc_batch_companies(batch: str) -> list[dict]:
+    """Return list of companies for a YC batch (e.g. 'Winter 2012')."""
+
+    normalized = _normalize_batch(batch)
+    url = f"{BATCH_API_BASE}/{normalized}.json"
+    response = requests.get(url, timeout=15)
+    if response.status_code == 404:
+        raise ValueError(f"Batch '{batch}' not found")
+    response.raise_for_status()
+    return response.json()
 
 def get_yc_companies(
     category: str = "all",
