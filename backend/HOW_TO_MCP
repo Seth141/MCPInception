@@ -1,0 +1,19 @@
+### Run MCP Server and get yc companies by batch in json format ###
+
+
+### MCP Server (for Claude Desktop and other MCP clients) ###
+# Run the MCP server
+cd backend
+uv run yc_mcp_server.py
+
+# Access via MCP resource pattern: mcp://yc/{batch}.json
+
+
+### HTTP API (for browsers, curl, and other HTTP clients) ###
+# Run the FastAPI server
+cd backend
+uv run -m uvicorn main:app --reload
+
+# Access via HTTP endpoint
+curl 'http://127.0.0.1:8000/yc/batch/summer-2015'
+

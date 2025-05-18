@@ -81,6 +81,43 @@ async def yc_companies(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=500, detail=f"Error: {exc}")
+
+
+@app.get("/yc/batch/{batch_slug}")
+async def yc_batch_http(
+    batch_slug: str,
+    persist: bool = False,
+):
+    """Return YC companies for a specific batch.
+    
+    The batch_slug parameter should be in the format "summer-2015" or "winter-2012".
+    If `persist=true`, rows are validated via Pydantic and upserted into the
+    `yc_companies` Postgres table.
+    """
+    
+    try:
+        # Convert batch format from "summer-2015" to "Summer 2015"
+        human_readable = batch_slug.replace("-", " ").title()
+        
+        # Use the same function as the MCP server
+        data = get_yc_batch_companies(human_readable)
+        
+        saved = None
+        if persist:
+            conn = get_db_conn()
+            saved = save_companies_to_db(conn, data)
+            conn.close()
+        
+        return {
+            "batch": human_readable,
+            "count": len(data),
+            **({"saved": saved} if saved is not None else {}),
+            "companies": data,
+        }
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    except Exception as exc:  # pylint: disable=broad-except
         raise HTTPException(status_code=500, detail=f"Failed to fetch YC data: {exc}")
 
 
@@ -122,20 +159,14 @@ uv run -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 http://127.0.0.1:8000/health
 http://127.0.0.1:8000/scrape?url=https://www.ycombinator.com/
 
-
-uv run -m uvicorn main:app --reload
-# then
-curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
-
-
+# Test the YC API endpoints:
 curl 'http://127.0.0.1:8000/yc?category=top' | jq '.count'
 curl 'http://127.0.0.1:8000/yc?category=hiring&persist=true' | jq '.saved'
-
 curl 'http://127.0.0.1:8000/yc/db?limit=20' | jq
 
+# Test the new batch endpoint with a slug:
+curl 'http://127.0.0.1:8000/yc/batch/summer-2015' | jq '.count'
 
-### Request all YC Companies from a batch (Summer 2015 for example)
-cd backend && uv run -m uvicorn main:app --reload
-
+# Test the original batch endpoint with a human-readable name:
 curl 'http://127.0.0.1:8000/yc/batch?batch=Summer%202015' | jq '.count'
 """
