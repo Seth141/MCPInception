@@ -129,24 +129,6 @@ YC_CATEGORIES: dict[str, str] = {
     "nonprofit": "nonprofit.json",
 }
 
-# base URL for batches
-BATCH_API_BASE = "https://yc-oss.github.io/api/batches"
-
-def _normalize_batch(batch: str) -> str:
-    """Convert input like 'Winter 2012' or 'winter-2012' -> 'winter-2012'."""
-    cleaned = batch.strip().lower().replace(" ", "-")
-    return cleaned
-
-def get_yc_batch_companies(batch: str) -> list[dict]:
-    """Return list of companies for a YC batch (e.g. 'Winter 2012')."""
-
-    normalized = _normalize_batch(batch)
-    url = f"{BATCH_API_BASE}/{normalized}.json"
-    response = requests.get(url, timeout=15)
-    if response.status_code == 404:
-        raise ValueError(f"Batch '{batch}' not found")
-    response.raise_for_status()
-    return response.json()
 
 def get_yc_companies(
     category: str = "all",
@@ -171,6 +153,32 @@ def get_yc_companies(
     response = requests.get(url, timeout=15)
     response.raise_for_status()
     return response.json()
+
+
+def _normalize_batch(batch: str) -> str:
+    """Normalize batch name to standard format (e.g., 'Summer 2015' -> 'summer-2015')."""
+    return batch.lower().replace(" ", "-")
+
+
+def get_yc_batch_companies(batch: str) -> list[dict]:
+    """Return YC companies from a specific batch (e.g., 'Summer 2015').
+    
+    Args:
+        batch: Batch name in human-readable format (e.g., 'Summer 2015')
+        
+    Returns:
+        List of company dictionaries for the specified batch
+    """
+    # Get all companies
+    all_companies = get_yc_companies("all")
+    
+    # Filter by batch
+    batch_companies = [company for company in all_companies if company.get("batch") == batch]
+    
+    if not batch_companies:
+        raise ValueError(f"No companies found for batch '{batch}'")
+        
+    return batch_companies
 
 
 # ---------------------------------------------------------------------------

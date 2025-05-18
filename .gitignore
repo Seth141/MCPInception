@@ -1,15 +1,6 @@
 *.DS_Store
 *.py[cod]
 *.egg-info/
-
-# Environment files
 .env
-backend/.env
-
-# Virtual environments
-.venv/
-backend/.venv/
-
-# Lock files
-uv.lock # For root, if it exists and is no longer needed
-backend/uv.lock*.code-workspace
+*.venv/
+*.code-workspace
