@@ -132,6 +132,207 @@ def yc_all_batches() -> dict[str, list[dict[str, Any]]]:
             all_batches[batch_slug] = []
     return all_batches
 
+@mcp.tool()
+def yc_companies_by_industry(industry: str) -> list[dict[str, Any]]:
+    """Return all YC companies in a specific industry/sector.
+    
+    Args:
+        industry: Industry/sector to filter by (e.g., "B2B", "Consumer", "Fintech")
+    """
+    logging.info(f"Searching for companies in industry: {industry}")
+    matching_companies = []
+    
+    # Search through all batches
+    for batch_slug in AVAILABLE_BATCHES:
+        try:
+            human_name = batch_slug.replace("-", " ").title()
+            companies = get_yc_batch_companies(human_name)
+            
+            # Filter companies by industry
+            for company in companies:
+                # Check both the main industry field and the industries list
+                main_industry = company.get("industry", "")
+                industries_list = company.get("industries", [])
+                
+                if (industry.lower() in main_industry.lower() or 
+                    any(industry.lower() in ind.lower() for ind in industries_list)):
+                    matching_companies.append(company)
+        except Exception as e:
+            logging.error(f"Error processing batch {human_name}: {str(e)}")
+    
+    logging.info(f"Found {len(matching_companies)} companies in industry: {industry}")
+    return matching_companies
+
+@mcp.tool()
+def yc_companies_by_status(status: str) -> list[dict[str, Any]]:
+    """Return all YC companies with a specific status.
+    
+    Args:
+        status: Company status to filter by (e.g., "Active", "Acquired", "Inactive")
+    """
+    logging.info(f"Searching for companies with status: {status}")
+    matching_companies = []
+    
+    for batch_slug in AVAILABLE_BATCHES:
+        try:
+            human_name = batch_slug.replace("-", " ").title()
+            companies = get_yc_batch_companies(human_name)
+            
+            # Filter companies by status
+            for company in companies:
+                company_status = company.get("status", "")
+                if status.lower() in company_status.lower():
+                    matching_companies.append(company)
+        except Exception as e:
+            logging.error(f"Error processing batch {human_name}: {str(e)}")
+    
+    logging.info(f"Found {len(matching_companies)} companies with status: {status}")
+    return matching_companies
+
+@mcp.tool()
+def yc_companies_by_region(region: str) -> list[dict[str, Any]]:
+    """Return all YC companies in a specific region.
+    
+    Args:
+        region: Region to filter by (e.g., "United States", "Europe", "Asia")
+    """
+    logging.info(f"Searching for companies in region: {region}")
+    matching_companies = []
+    
+    for batch_slug in AVAILABLE_BATCHES:
+        try:
+            human_name = batch_slug.replace("-", " ").title()
+            companies = get_yc_batch_companies(human_name)
+            
+            # Filter companies by region
+            for company in companies:
+                regions_list = company.get("regions", [])
+                if any(region.lower() in reg.lower() for reg in regions_list):
+                    matching_companies.append(company)
+        except Exception as e:
+            logging.error(f"Error processing batch {human_name}: {str(e)}")
+    
+    logging.info(f"Found {len(matching_companies)} companies in region: {region}")
+    return matching_companies
+
+@mcp.tool()
+def yc_search_companies(query: str) -> list[dict[str, Any]]:
+    """Search for YC companies by name, description, or tags.
+    
+    Args:
+        query: Search term to look for in company name, description, or tags
+    """
+    logging.info(f"Searching for companies matching query: {query}")
+    matching_companies = []
+    
+    for batch_slug in AVAILABLE_BATCHES:
+        try:
+            human_name = batch_slug.replace("-", " ").title()
+            companies = get_yc_batch_companies(human_name)
+            
+            # Search companies by name, description, or tags
+            for company in companies:
+                name = company.get("name", "")
+                one_liner = company.get("one_liner", "")
+                description = company.get("long_description", "")
+                tags = company.get("tags", [])
+                
+                if (query.lower() in name.lower() or
+                    query.lower() in one_liner.lower() or
+                    query.lower() in description.lower() or
+                    any(query.lower() in tag.lower() for tag in tags)):
+                    matching_companies.append(company)
+        except Exception as e:
+            logging.error(f"Error processing batch {human_name}: {str(e)}")
+    
+    logging.info(f"Found {len(matching_companies)} companies matching query: {query}")
+    return matching_companies
+
+@mcp.tool()
+def yc_advanced_search(industry: str = None, status: str = None, region: str = None, 
+                       query: str = None, batch: str = None, 
+                       min_team_size: int = None) -> list[dict[str, Any]]:
+    """Advanced search for YC companies with multiple filters.
+    
+    Args:
+        industry: Optional industry/sector filter (e.g., "B2B", "Consumer")
+        status: Optional status filter (e.g., "Active", "Acquired")
+        region: Optional region filter (e.g., "United States", "Europe")
+        query: Optional text search in name, description, or tags
+        batch: Optional batch filter (e.g., "Summer 2015")
+        min_team_size: Optional minimum team size filter
+    """
+    logging.info(f"Advanced search with filters: industry={industry}, status={status}, "
+                f"region={region}, query={query}, batch={batch}, min_team_size={min_team_size}")
+    
+    all_companies = []
+    batch_slugs = []
+    
+    # If batch is specified, only search in that batch
+    if batch:
+        batch_slug = batch.lower().replace(" ", "-")
+        if batch_slug in AVAILABLE_BATCHES:
+            batch_slugs = [batch_slug]
+        else:
+            logging.error(f"Invalid batch: {batch}")
+            return []
+    else:
+        batch_slugs = AVAILABLE_BATCHES
+    
+    # Collect all companies from relevant batches
+    for batch_slug in batch_slugs:
+        try:
+            human_name = batch_slug.replace("-", " ").title()
+            companies = get_yc_batch_companies(human_name)
+            all_companies.extend(companies)
+        except Exception as e:
+            logging.error(f"Error processing batch {human_name}: {str(e)}")
+    
+    # Apply filters
+    filtered_companies = all_companies
+    
+    # Industry filter
+    if industry:
+        filtered_companies = [
+            company for company in filtered_companies
+            if (industry.lower() in company.get("industry", "").lower() or
+                any(industry.lower() in ind.lower() for ind in company.get("industries", [])))
+        ]
+    
+    # Status filter
+    if status:
+        filtered_companies = [
+            company for company in filtered_companies
+            if status.lower() in company.get("status", "").lower()
+        ]
+    
+    # Region filter
+    if region:
+        filtered_companies = [
+            company for company in filtered_companies
+            if any(region.lower() in reg.lower() for reg in company.get("regions", []))
+        ]
+    
+    # Text search filter
+    if query:
+        filtered_companies = [
+            company for company in filtered_companies
+            if (query.lower() in company.get("name", "").lower() or
+                query.lower() in company.get("one_liner", "").lower() or
+                query.lower() in company.get("long_description", "").lower() or
+                any(query.lower() in tag.lower() for tag in company.get("tags", [])))
+        ]
+    
+    # Team size filter
+    if min_team_size is not None:
+        filtered_companies = [
+            company for company in filtered_companies
+            if company.get("team_size", 0) >= min_team_size
+        ]
+    
+    logging.info(f"Found {len(filtered_companies)} companies matching all filters")
+    return filtered_companies
+
 @mcp.resource("mcp://yc/{batch}.json", mime_type="application/json")
 def yc_batch_json(batch: str) -> list[dict[str, Any]]:
     """Return company list for a YC batch.
