@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent, MouseEvent } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -11,7 +11,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     alert('Button clicked - handleSubmit triggered');
     e.preventDefault();
     setLoading(true);
@@ -65,6 +65,35 @@ export default function Home() {
     }
   };
 
+  const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+  };
+
+  const handleServerNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setServerName(e.target.value);
+  };
+
+  const handleButtonClick = (e: MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget;
+    const ripple = document.createElement('span');
+    const rect = button.getBoundingClientRect();
+    
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.className = 'absolute bg-white/20 rounded-full animate-ripple';
+    
+    button.appendChild(ripple);
+    
+    ripple.addEventListener('animationend', () => {
+      ripple.remove();
+    });
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <Header />
@@ -97,7 +126,7 @@ export default function Home() {
                   type="url"
                   placeholder="https://example.com"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={handleUrlChange}
                   required
                 />
               </div>
@@ -112,7 +141,7 @@ export default function Home() {
                   type="text"
                   placeholder="my-mcp-server"
                   value={serverName}
-                  onChange={(e) => setServerName(e.target.value)}
+                  onChange={handleServerNameChange}
                 />
               </div>
               
@@ -121,26 +150,7 @@ export default function Home() {
                   className="w-48 py-2.5 px-4 text-white font-bold rounded-lg bg-purple-900/80 hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/25 relative overflow-hidden group"
                   type="submit"
                   disabled={loading}
-                  onClick={(e) => {
-                    const button = e.currentTarget;
-                    const ripple = document.createElement('span');
-                    const rect = button.getBoundingClientRect();
-                    
-                    const size = Math.max(rect.width, rect.height);
-                    const x = e.clientX - rect.left - size / 2;
-                    const y = e.clientY - rect.top - size / 2;
-                    
-                    ripple.style.width = ripple.style.height = `${size}px`;
-                    ripple.style.left = `${x}px`;
-                    ripple.style.top = `${y}px`;
-                    ripple.className = 'absolute bg-white/20 rounded-full animate-ripple';
-                    
-                    button.appendChild(ripple);
-                    
-                    ripple.addEventListener('animationend', () => {
-                      ripple.remove();
-                    });
-                  }}
+                  onClick={handleButtonClick}
                 >
                   <span className="relative z-10 flex items-center justify-center">
                     {loading ? 'Processing...' : 'Generate MCP'}
